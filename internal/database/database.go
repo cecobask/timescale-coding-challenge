@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -37,6 +38,29 @@ func New(ctx context.Context) (*Database, error) {
 	}, nil
 }
 
-func (d *Database) Close() {
-	d.pool.Close()
+const cpuUsageQuery = `
+	SELECT
+		time_bucket('1 minutes', ts) AS bucket,
+		first(usage, ts),
+		last(usage, ts) 
+	FROM
+		cpu_usage 
+	WHERE
+		host = $1 AND ts BETWEEN $2 AND $3 
+	GROUP BY
+		bucket 
+	ORDER BY
+		bucket ASC;
+`
+
+func (db *Database) BenchmarkQuery(ctx context.Context, hostname, startTime, endTime string) (time.Duration, error) {
+	start := time.Now()
+	if _, err := db.pool.Exec(ctx, cpuUsageQuery, hostname, startTime, endTime); err != nil {
+		return 0, fmt.Errorf("unable to execute query: %w", err)
+	}
+	return time.Since(start), nil
+}
+
+func (db *Database) Close() {
+	db.pool.Close()
 }
