@@ -13,24 +13,33 @@ import (
 
 func NewCommand() *cobra.Command {
 	command := &cobra.Command{
-		Use:   fmt.Sprintf("%s [command]", cmd.CommandNameBenchmark),
-		Short: "benchmark timescale database",
-		PreRunE: func(c *cobra.Command, args []string) (err error) {
-			fileInfo, err := os.Stdin.Stat()
-			if err != nil {
-				return err
-			}
-			configProvided := c.Flags().Lookup(cmd.FlagNameConfig).Changed || (fileInfo.Mode()&os.ModeNamedPipe != 0)
-			if !configProvided {
-				return fmt.Errorf("config file or standard input must be provided")
-			}
-			return nil
-		},
-		RunE: run,
+		Use:     fmt.Sprintf("%s [command]", cmd.CommandNameBenchmark),
+		Short:   "benchmark timescale database",
+		PreRunE: validate,
+		RunE:    run,
 	}
 	command.Flags().StringP(cmd.FlagNameConfig, "c", "", "path to the config file")
 	command.Flags().IntP(cmd.FlagNameWorkers, "w", 1, "number of workers to use")
 	return command
+}
+
+func validate(c *cobra.Command, _ []string) error {
+	fileInfo, err := os.Stdin.Stat()
+	if err != nil {
+		return err
+	}
+	configProvided := c.Flags().Lookup(cmd.FlagNameConfig).Changed || (fileInfo.Mode()&os.ModeNamedPipe != 0)
+	if !configProvided {
+		return fmt.Errorf("config file or standard input must be provided")
+	}
+	workerCount, err := c.Flags().GetInt(cmd.FlagNameWorkers)
+	if err != nil {
+		return err
+	}
+	if workerCount < 1 {
+		return fmt.Errorf("worker count must be a positive integer")
+	}
+	return nil
 }
 
 func run(c *cobra.Command, _ []string) error {

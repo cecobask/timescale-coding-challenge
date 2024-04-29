@@ -1,7 +1,10 @@
 .PHONY: *
 
-start:
-	docker compose up -d
+validate:
+	@test -f .env || (echo "The .env file is required!\nPlease, create it by using the .env.example file as guidance..." && exit 1)
+
+start: validate
+	docker compose up --build --detach
 
 stop:
 	docker compose down --volumes

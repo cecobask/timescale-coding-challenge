@@ -26,8 +26,23 @@ services:
       - -path
       - /migrations
       - -database
-      - postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/${POSTGRES_DB}?sslmode=disable
-      - -verbose
+      - postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@timescaledb:5432/${POSTGRES_DB}?sslmode=disable
       - up
     volumes:
       - ./migrations:/migrations
+  ts:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    command:
+      - benchmark
+      - --workers=3
+      - --config=$CONFIGURATION_FILE
+    volumes:
+      - ./.env:/.env
+      - ./query_params.csv:/$CONFIGURATION_FILE
