@@ -9,6 +9,7 @@ import (
 	"github.com/cecobask/timescale-coding-challenge/cmd"
 	"github.com/cecobask/timescale-coding-challenge/internal/database"
 	"github.com/cecobask/timescale-coding-challenge/internal/orchestrator"
+	"github.com/cecobask/timescale-coding-challenge/pkg/statistics"
 )
 
 func NewCommand() *cobra.Command {
@@ -67,6 +68,8 @@ func run(c *cobra.Command, _ []string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("Benchmarks count:", len(benchmarks))
+	stats := statistics.NewStatistics(benchmarks)
+	fmt.Println(stats.BenchmarksTable(true))
+	fmt.Println(stats.StatisticsTable())
 	return nil
 }
