@@ -31,6 +31,8 @@ services:
     volumes:
       - ./migrations:/migrations
   ts:
+    profiles:
+      - app
     build:
       context: .
       dockerfile: Dockerfile
@@ -45,4 +47,4 @@ services:
       - --config=$CONFIGURATION_FILE
     volumes:
       - ./.env:/.env
-      - ./query_params.csv:/$CONFIGURATION_FILE
+      - ./$CONFIGURATION_FILE:/$CONFIGURATION_FILE
